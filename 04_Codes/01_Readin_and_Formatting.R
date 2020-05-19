@@ -23,10 +23,10 @@ pchc.mapping2 <- pchc.universe %>%
   ungroup()
 
 pchc.mapping3 <- pchc.mapping1 %>% 
-  group_by(pchc1) %>% 
-  summarise(province = first(province),
-            city = first(city),
-            district = first(district)) %>% 
+  group_by(pchc = pchc1) %>% 
+  summarise(province = first(na.omit(province)),
+            city = first(na.omit(city)),
+            district = first(na.omit(district))) %>% 
   ungroup()
 
 # IMS pack
@@ -55,7 +55,7 @@ servier.gd.raw <- read.csv("02_Inputs/raw data/gzs 20q1.csv")
 
 servier.gd <- servier.gd.raw %>% 
   mutate(year = stri_sub(period, 1, 4),
-         month = stri_replace_all_fixed(period, "-", "0"),
+         date = stri_replace_all_fixed(period, "-", "0"),
          quarter = stri_paste(year, "Q1"),
          province = "广东",
          city = "广州",
@@ -66,21 +66,25 @@ servier.gd <- servier.gd.raw %>%
   mutate(pchc = ifelse(is.na(pchc1), pchc2, pchc1)) %>% 
   filter(!is.na(pchc)) %>% 
   left_join(market.def, by = "packid") %>% 
-  select(year, month, quarter, province, city, pchc, market, packid, units = unit, sales = value)
+  select(year, date, quarter, province, city, pchc, market, atc3, molecule_desc, 
+         packid, units = unit, sales = value)
 
-# 2019Q1
-servier.history <- read_feather("02_Inputs/raw data/Servier_CHC_Total_Raw.feather")
+# history
+servier.history <- read_feather("02_Inputs/raw data/Servier_CHC_Total_Raw_2017-2019.feather")
 
 
 ##---- Bind ----
 total.raw <- bind_rows(servier.history, servier.gd) %>% 
   filter(pchc != "#N/A", !is.na(market), units > 0, sales > 0, quarter %in% c("2019Q1", "2020Q1")) %>% 
-  group_by(year, month, quarter, province, city, pchc, market, packid) %>% 
-  summarise(units = sum(units, na.rm = TRUE),
+  filter(city %in% target.city) %>% 
+  group_by(year, date, quarter, pchc, market, atc3, molecule_desc, packid) %>% 
+  summarise(province = first(na.omit(province)),
+            city = first(na.omit(city)),
+            units = sum(units, na.rm = TRUE),
             sales = sum(sales, na.rm = TRUE)) %>% 
   ungroup()
 
-
+write_feather(total.raw, "03_Outputs/01_Servier_CHC_Raw_2020Q1.feather")
 
 
 
