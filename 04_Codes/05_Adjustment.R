@@ -7,7 +7,7 @@
 
 
 ##---- ATC2 adjustment ----
-atc.adj.raw <- total.proj %>% 
+atc.adj.raw <- total.price %>% 
   mutate(atc2 = stri_sub(atc3, 1, 3),
          market = if_else(atc2 %in% c("C07", "C08"), "IHD", market)) %>% 
   filter(!(market == "IHD" & molecule_desc == "IVABRADINE")) %>% 
@@ -41,6 +41,7 @@ scale.adj <- total.atc.adj %>%
   filter(panel != 1) %>% 
   left_join(scale.factor, by = c("city", "market" = "mkt")) %>% 
   mutate(factor = if_else(is.na(factor), 1, factor),
+         factor = if_else(city == "上海", 1, factor),
          sales = sales * factor,
          units = units * factor) %>% 
   select(-factor)

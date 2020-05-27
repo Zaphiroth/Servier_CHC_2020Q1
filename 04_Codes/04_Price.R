@@ -7,7 +7,7 @@
 
 
 ##---- Origin Price ----
-total.imp <- total.20q1.imp
+total.imp <- total.in.imp
 # total.proj <- read_feather("03_Outputs/04_Servier_CHC_Projection.feather")
 
 price.origin <- total.imp %>% 
@@ -62,7 +62,6 @@ target.city <- c("北京", "常州", "福州", "广州", "杭州", "南京",
 
 total.price <- total.proj %>% 
   filter(province %in% target.prov, city %in% target.city) %>% 
-  filter(city != "上海") %>% 
   left_join(price.origin, by = c("province", "city", "year", "quarter", "packid")) %>% 
   left_join(price.year, by = c("province", "city", "year", "packid")) %>% 
   left_join(price.city, by = c("province", "city", "packid")) %>% 
@@ -70,11 +69,11 @@ total.price <- total.proj %>%
   mutate(price = ifelse(is.na(price), price_year, price),
          price = ifelse(is.na(price), price_city, price),
          price = ifelse(is.na(price), price_pack, price)) %>% 
-  mutate(units_update = sales / price,
-         units_update = ifelse(units_update <= 0, 0, units_update)) %>% 
+  mutate(units = sales / price,
+         units = ifelse(units <= 0, 0, units)) %>% 
   filter(!is.na(price), !is.na(sales)) %>% 
   select(year, quarter, province, city, pchc, market, atc3, 
-         molecule_desc, packid, sales, price, units = units_update, panel)
+         molecule_desc, packid, units, sales, price, panel)
 
 write_feather(total.price, "03_Outputs/04_Servier_CHC_Price_2020Q1.feather")
 

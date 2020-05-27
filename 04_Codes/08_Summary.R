@@ -293,7 +293,6 @@ chc.add <- chc.flag %>%
 chc.history <- read.xlsx("02_Inputs/09_Servier_CHC_171819.xlsx")
 
 chc.result <- chc.history %>% 
-  filter(City == "广州") %>% 
   mutate(Pack_ID = stri_pad_left(Pack_ID, 7, 0)) %>% 
   bind_rows(chc.add) %>% 
   mutate(Corp_Desc = if_else(Corp_Desc == "LUYE GROUP", "LVYE GROUP", Corp_Desc),

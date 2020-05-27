@@ -8,7 +8,7 @@
 
 ##---- Imputing inside existing provinces ----
 total.imp.raw <- total.raw %>% 
-  filter(city == "广州")
+  filter(city %in% c("广州", "上海"))
 
 # quarterly date continuity
 date.continuity <- total.imp.raw %>% 
@@ -86,10 +86,12 @@ total.20q1.imp <- total.imp.raw %>%
 
 total.in.imp <- total.raw %>% 
   mutate(flag1 = 0) %>% 
-  filter(province %in% c("福建", "浙江")) %>% 
-  filter(city %in% c("北京", "常州", "福州", "广州", "杭州", "南京", "宁波", 
-                     "泉州", "厦门", "上海", "苏州", "温州", "无锡")) %>% 
-  bind_rows(total.20q1.imp)
+  filter(city %in% c("北京")) %>% 
+  # filter(province %in% c("福建", "浙江")) %>% 
+  # filter(city %in% c("北京", "常州", "福州", "广州", "杭州", "南京", "宁波", 
+  #                    "泉州", "厦门", "上海", "苏州", "温州", "无锡")) %>% 
+  bind_rows(total.20q1.imp) %>% 
+  mutate(seg_city = ifelse(is.na(seg_city), city, seg_city))
 
 
 ##---- Imputing outside existing provinces ----

@@ -69,22 +69,80 @@ servier.gd <- servier.gd.raw %>%
   select(year, date, quarter, province, city, pchc, market, atc3, molecule_desc, 
          packid, units = unit, sales = value)
 
+# Beijing
+servier.bj.raw <- read.xlsx("02_Inputs/raw data/beijing2020Q1_packid_moleinfo.xlsx")
+
+servier.bj <- servier.bj.raw %>% 
+  filter(`项目` == "【CHC项目】-2020年北京") %>% 
+  mutate(year = as.character(`年`),
+         date = as.character(`月份`),
+         quarter = as.character(`季度`),
+         province = "北京",
+         city = "北京",
+         hospital = `医院名称`,
+         packid = stri_pad_left(packcode, 7, 0)) %>% 
+  distinct() %>% 
+  left_join(pchc.mapping1, by = c("province", "city", "hospital")) %>% 
+  left_join(pchc.mapping2, by = c("province", "city", "hospital")) %>% 
+  mutate(pchc = ifelse(is.na(pchc1), pchc2, pchc1)) %>% 
+  filter(!is.na(pchc)) %>% 
+  left_join(market.def, by = "packid") %>% 
+  select(year, date, quarter, province, city, pchc, market, atc3, molecule_desc, 
+         packid, units = `数量`, sales = `金额`)
+
+# Shanghai
+servier.sh.raw <- read.xlsx("02_Inputs/raw data/shanghai_201805_202004_packid_moleinfo_PCHC.xlsx")
+
+servier.sh <- servier.sh.raw %>% 
+  mutate(year = as.character(Year),
+         date = as.character(Month),
+         quarter = ifelse(stri_sub(date, 5, 6) %in% c("01", "02", "03"), paste0(year, "Q1"), 
+                          ifelse(stri_sub(date, 5, 6) %in% c("04", "05", "06"), paste0(year, "Q2"), 
+                                 ifelse(stri_sub(date, 5, 6) %in% c("07", "08", "09"), paste0(year, "Q3"), 
+                                        ifelse(stri_sub(date, 5, 6) %in% c("10", "11", "12"), paste0(year, "Q4"), 
+                                               NA_character_)))),
+         province = "上海",
+         city = "上海",
+         seg_city = paste0(`城市`, `区县`),
+         pchc = PCHC_Code,
+         packid = packcode) %>% 
+  distinct() %>% 
+  left_join(market.def, by = "packid") %>% 
+  select(year, date, quarter, province, city, seg_city, pchc, market, atc3, molecule_desc, 
+         packid, units = `数量`, sales = `金额`)
+
 # history
 servier.history <- read_feather("02_Inputs/raw data/Servier_CHC_Total_Raw_2017-2019.feather")
 
 
 ##---- Bind ----
-total.raw <- bind_rows(servier.history, servier.gd) %>% 
+total.raw <- bind_rows(servier.history, servier.gd, servier.bj, servier.sh) %>% 
   filter(pchc != "#N/A", !is.na(market), units > 0, sales > 0, quarter %in% c("2019Q1", "2020Q1")) %>% 
   filter(city %in% target.city) %>% 
+  mutate(seg_city = ifelse(is.na(seg_city), city, seg_city)) %>% 
   group_by(year, date, quarter, pchc, market, atc3, molecule_desc, packid) %>% 
   summarise(province = first(na.omit(province)),
             city = first(na.omit(city)),
+            seg_city = first(na.omit(seg_city)),
             units = sum(units, na.rm = TRUE),
             sales = sum(sales, na.rm = TRUE)) %>% 
   ungroup()
 
 write_feather(total.raw, "03_Outputs/01_Servier_CHC_Raw_2020Q1.feather")
 
+total.raw.chk <- bind_rows(servier.history, servier.gd, servier.bj, servier.sh) %>% 
+  filter(pchc != "#N/A", !is.na(market), units > 0, sales > 0, 
+         quarter %in% c("2019Q1", "2019Q2", "2019Q3", "2019Q4", "2020Q1")) %>% 
+  filter(city %in% target.city) %>% 
+  mutate(seg_city = ifelse(is.na(seg_city), city, seg_city)) %>% 
+  group_by(year, date, quarter, pchc, market, atc3, molecule_desc, packid) %>% 
+  summarise(province = first(na.omit(province)),
+            city = first(na.omit(city)),
+            seg_city = first(na.omit(seg_city)),
+            units = sum(units, na.rm = TRUE),
+            sales = sum(sales, na.rm = TRUE)) %>% 
+  ungroup()
+
+write.xlsx(total.raw.chk, "03_Outputs/01_Servier_CHC_Raw_2020Q1.xlsx")
 
 
