@@ -242,6 +242,7 @@ chc.add <- chc.flag %>%
          是否是MNC, ATC3中文分类) %>% 
   left_join(city.en, by = "City") %>% 
   mutate(`Period-MAT` = case_when(
+    Date %in% c("2020Q1", "2020Q2", "2020Q3", "2020Q4") ~ "MAT20Q4",
     Date %in% c("2019Q1", "2019Q2", "2019Q3", "2019Q4") ~ "MAT19Q4",
     Date %in% c("2018Q1", "2018Q2", "2018Q3", "2018Q4") ~ "MAT18Q4",
     Date %in% c("2017Q1", "2017Q2", "2017Q3", "2017Q4") ~ "MAT17Q4",
