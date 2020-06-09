@@ -62,10 +62,10 @@ proj.factor <- read_xlsx("02_Inputs/factor4.xlsx") %>%
   select("market" = "mkt", "seg", "factor")
 
 
-##---- Projection without Fuzhou ----
+##---- Projection without Fuzhou & Shanghai ----
 # projection data
 proj.raw <- total.imp %>% 
-  filter(city != "福州", quarter == "2020Q1")
+  filter(!(city %in% c("上海", "福州")), quarter == "2020Q1")
 
 # quarter sales
 proj.quarter <- proj.raw %>% 

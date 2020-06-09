@@ -49,7 +49,7 @@ corp.pack <- select(pack.ref, "Pack_Id", "Pck_Desc", "Corp_ID") %>%
 pack.size <- distinct(pack.ref, packid = Pack_Id, pack_size = PckSize_Desc)
 
 # join
-chc.part <- total.zs %>% 
+chc.part <- bind_rows(total.zs, proj.sh) %>% 
   left_join(tradename.mapping, by = "packid") %>% 
   left_join(corp.pack, by = "packid") %>% 
   left_join(pack.size, by = "packid") %>% 
@@ -86,7 +86,7 @@ a10s <- total.scale.adj %>%
   ungroup()
 
 # total CHC
-total.chc <- bind_rows(chc.part, a10s) %>% 
+total.chc <- bind_rows(chc.part, a10s, bj.chs) %>% 
   select(Pack_ID = packid, Channel = channel, Province = province, City = city, 
          Date = quarter, ATC3 = atc3, MKT = market, Molecule_Desc = molecule_desc, 
          Prod_Desc = trade_name, Pck_Desc = pack_desc, Corp_Desc = corp_desc, 
@@ -283,21 +283,37 @@ chc.add <- chc.flag %>%
   #                    "2019Q1", "2019Q2", "2019Q3", "2019Q4")) %>% 
   # filter(Sales > 0, Units > 0) %>% 
   select(Pack_ID, Channel, Province, City, Date, ATC3, MKT, Molecule_Desc, 
-         Prod_Desc, Pck_Desc, Corp_Desc, Sales,  Units, DosageUnits, 
+         Prod_Desc, Pck_Desc, Corp_Desc, Sales, Units, DosageUnits, 
          `Period-MAT`, `CITY-EN`, TherapeuticClsII, Prod_CN_Name,  Package, 
-         Dosage, Quantity, `是否是4+7城市`, 是否进入带量采购, 是否是原研, 
-         是否是中标品种, 是否是MNC, ATC3中文分类)
+         Dosage, Quantity, `是否是4+7城市`, `是否进入带量采购`, `是否是原研`, 
+         `是否是中标品种`, `是否是MNC`, `ATC3中文分类`)
 
 
 ##---- Result ----
-chc.history <- read.xlsx("02_Inputs/09_Servier_CHC_171819.xlsx")
+chc.history <- read.xlsx("02_Inputs/CHC_MAX_16Q419Q4_0317.xlsx")
 
 chc.result <- chc.history %>% 
   mutate(Pack_ID = stri_pad_left(Pack_ID, 7, 0)) %>% 
   bind_rows(chc.add) %>% 
+  filter(Sales > 0, Units > 0, DosageUnits > 0) %>% 
   mutate(Corp_Desc = if_else(Corp_Desc == "LUYE GROUP", "LVYE GROUP", Corp_Desc),
          Corp_Desc = if_else(Prod_Desc == "GLUCOPHAGE", "MERCK GROUP", Corp_Desc),
-         Corp_Desc = if_else(Prod_Desc == "ONGLYZA", "ASTRAZENECA GROUP", Corp_Desc))
+         Corp_Desc = if_else(Prod_Desc == "ONGLYZA", "ASTRAZENECA GROUP", Corp_Desc)) %>% 
+  group_by(Pack_ID, Channel, Province, City, Date, ATC3, MKT, Molecule_Desc, 
+           Prod_Desc, Pck_Desc, Corp_Desc, `Period-MAT`, `CITY-EN`, 
+           TherapeuticClsII, Prod_CN_Name,  Package, Dosage, Quantity, 
+           `是否是4+7城市`, `是否进入带量采购`, `是否是原研`, `是否是中标品种`, 
+           `是否是MNC`, `ATC3中文分类`) %>% 
+  summarise(Sales = sum(Sales, na.rm = TRUE),
+            Units = sum(Units, na.rm = TRUE),
+            DosageUnits = sum(DosageUnits, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  select(Pack_ID, Channel, Province, City, Date, ATC3, MKT, Molecule_Desc, 
+         Prod_Desc, Pck_Desc, Corp_Desc, Sales, Units, DosageUnits, 
+         `Period-MAT`, `CITY-EN`, TherapeuticClsII, Prod_CN_Name,  Package, 
+         Dosage, Quantity, `是否是4+7城市`, `是否进入带量采购`, `是否是原研`, 
+         `是否是中标品种`, `是否是MNC`, `ATC3中文分类`) %>% 
+  arrange(Channel, Date, Province, City, MKT, Pack_ID)
 
 write.xlsx(chc.result, "03_Outputs/08_Servier_CHC_Summary_2020Q1.xlsx")
 
