@@ -76,6 +76,7 @@ a10s <- total.scale.adj %>%
   left_join(tradename.mapping, by = "packid") %>% 
   left_join(corp.pack, by = "packid") %>% 
   left_join(pack.size, by = "packid") %>% 
+  filter(stri_sub(pack_desc, 1, 4) %in% c("CAP ", "TAB ", "PILL")) %>% 
   mutate(dosage_units = pack_size * units,
          channel = "CHC") %>% 
   group_by(province, city, year, quarter, market, atc3, molecule_desc, packid, 
@@ -296,7 +297,8 @@ chc.history <- read.xlsx("02_Inputs/CHC_MAX_16Q419Q4_0317.xlsx")
 chc.result <- chc.history %>% 
   mutate(Pack_ID = stri_pad_left(Pack_ID, 7, 0)) %>% 
   bind_rows(chc.add) %>% 
-  filter(Sales > 0, Units > 0, DosageUnits > 0) %>% 
+  filter(Sales > 0, Units > 0, DosageUnits > 0, 
+         stri_sub(Package, 1, 4) %in% c("CAP ", "TAB ", "PILL")) %>% 
   mutate(Corp_Desc = if_else(Corp_Desc == "LUYE GROUP", "LVYE GROUP", Corp_Desc),
          Corp_Desc = if_else(Prod_Desc == "GLUCOPHAGE", "MERCK GROUP", Corp_Desc),
          Corp_Desc = if_else(Prod_Desc == "ONGLYZA", "ASTRAZENECA GROUP", Corp_Desc)) %>% 

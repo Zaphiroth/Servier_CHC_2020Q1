@@ -73,7 +73,8 @@ chs.htn.adj <- bj.chs.raw %>%
 
 ##---- Result ----
 bj.chs <- bj.chs.raw %>% 
-  filter(!(atc2 %in% c("C05", "C07", "C08"))) %>% 
+  filter(!(atc2 %in% c("C05", "C07", "C08")), 
+         stri_sub(pack_desc, 1, 4) %in% c("CAP ", "TAB ", "PILL")) %>% 
   bind_rows(chs.ihd.adj, chs.htn.adj) %>% 
   mutate(channel = "CHS",
          year = "2020") %>% 
