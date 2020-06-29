@@ -298,7 +298,9 @@ chc.result <- chc.history %>%
   mutate(Pack_ID = stri_pad_left(Pack_ID, 7, 0)) %>% 
   bind_rows(chc.add) %>% 
   filter(Sales > 0, Units > 0, DosageUnits > 0, 
-         stri_sub(Package, 1, 4) %in% c("CAP ", "TAB ", "PILL")) %>% 
+         !(MKT %in% c("HTN", "IHD") & 
+             !(stri_sub(Package, 1, 4) %in% c("CAP ", "TAB ", "PILL"))), 
+         Channel != "MAX") %>% 
   mutate(Corp_Desc = if_else(Corp_Desc == "LUYE GROUP", "LVYE GROUP", Corp_Desc),
          Corp_Desc = if_else(Prod_Desc == "GLUCOPHAGE", "MERCK GROUP", Corp_Desc),
          Corp_Desc = if_else(Prod_Desc == "ONGLYZA", "ASTRAZENECA GROUP", Corp_Desc)) %>% 

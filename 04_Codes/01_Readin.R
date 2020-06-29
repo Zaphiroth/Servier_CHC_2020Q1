@@ -146,3 +146,24 @@ total.raw.chk <- bind_rows(servier.history, servier.gd, servier.bj, servier.sh) 
 write.xlsx(total.raw.chk, "03_Outputs/01_Servier_CHC_Raw_2020Q1.xlsx")
 
 
+chk.growth <- bind_rows(servier.history, servier.gd, servier.bj, servier.sh) %>% 
+  filter(pchc != "#N/A", !is.na(market), units > 0, sales > 0) %>% 
+  filter(city %in% target.city, market == "OAD", year %in% c("2017", "2018", "2019")) %>% 
+  group_by(year, city, market) %>% 
+  summarise(sales = sum(sales, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  arrange(city, year) %>% 
+  mutate(growth = sales / lag(sales) - 1) %>% 
+  filter(year == "2019")
+
+write.xlsx(chk.growth, "05_Internal_Review/Growth_2018_2019.xlsx")
+
+
+chk <- bind_rows(servier.history, servier.gd, servier.bj, servier.sh) %>% 
+  filter(pchc != "#N/A", !is.na(market), units > 0, sales > 0) %>% 
+  filter(city %in% target.city, market == "OAD", year %in% c("2017", "2018", "2019")) %>% 
+  group_by(year, market) %>% 
+  summarise(sales = sum(sales, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  arrange(year) %>% 
+  mutate(growth = sales / lag(sales) - 1)

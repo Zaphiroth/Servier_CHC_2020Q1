@@ -20,8 +20,8 @@ hospital.universe <- pchc.universe %>%
 
 # city segment
 segment <- read_xlsx("02_Inputs/seg_45cities.xlsx") %>% 
-  mutate(city = ifelse(city == "上海", paste0(city, district), city)) %>% 
-  select(seg_city = city, seg = seg_up)
+  mutate(seg_city = ifelse(city == "上海", paste0(city, district), city)) %>% 
+  select(seg_city, seg = seg_up)
 
 # sample range
 sample.pick <- read_xlsx("02_Inputs/历史数据样本范围_13Cities.xlsx", sheet = 2)
