@@ -303,7 +303,8 @@ chc.result <- chc.history %>%
          Channel != "MAX") %>% 
   mutate(Corp_Desc = if_else(Corp_Desc == "LUYE GROUP", "LVYE GROUP", Corp_Desc),
          Corp_Desc = if_else(Prod_Desc == "GLUCOPHAGE", "MERCK GROUP", Corp_Desc),
-         Corp_Desc = if_else(Prod_Desc == "ONGLYZA", "ASTRAZENECA GROUP", Corp_Desc)) %>% 
+         Pack_ID = if_else(Pack_ID == '4777502', '5890602', Pack_ID), 
+         Corp_Desc = if_else(Pack_ID == '4777502', 'ASTRAZENECA GROUP', Corp_Desc)) %>% 
   group_by(Pack_ID, Channel, Province, City, Date, ATC3, MKT, Molecule_Desc, 
            Prod_Desc, Pck_Desc, Corp_Desc, `Period-MAT`, `CITY-EN`, 
            TherapeuticClsII, Prod_CN_Name,  Package, Dosage, Quantity, 
@@ -321,6 +322,16 @@ chc.result <- chc.history %>%
   arrange(Channel, Date, Province, City, MKT, Pack_ID)
 
 write.xlsx(chc.result, "03_Outputs/08_Servier_CHC_Summary_2020Q1.xlsx")
+
+
+##---- BI check ----
+bi.chk <- chc.result %>% 
+  filter(Prod_CN_Name %in% c('爱通立', '沐舒坦', '泰毕全', '森福罗', '爱全乐', 
+                             '思力华', '欧唐静', '欧唐宁'), 
+         stri_sub(Date, 1, 4) == '2019')
+
+
+
 
 
 
